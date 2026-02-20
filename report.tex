@@ -1,0 +1,415 @@
+\documentclass[12pt]{article}
+\usepackage{enumitem}
+\usepackage[top=0.6in,bottom=0.6in,right=0.7in,left=0.7in]{geometry}
+\usepackage[LGR, T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[greek, english]{babel}
+\usepackage{alphabeta}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{listings}
+\usepackage[breaklinks]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{ragged2e}
+\usepackage{titlepic}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\usepackage[giveninits=true, style=ieee]{biblatex}
+\addbibresource{references.bib}
+\renewbibmacro{in:}{}
+
+\graphicspath{ {images/} }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{titlepage}
+% \pagecolor{blue!10}
+\begin{center}
+
+\textsc{\Large \textcolor{black}{\textbf{ΕΘΝΙΚΟ ΜΕΤΣΟΒΙΟ ΠΟΛΥΤΕΧΝΕΙΟ}}}\\[0.4cm]	
+
+{\huge {Σχολή Ηλεκτρολόγων Μηχανικών και Μηχανικών Υπολογιστών} \\[1cm] }
+{\huge {School of Electrical and Computer Engineering} \\[1cm] }
+
+
+\includegraphics[scale=0.3]{NTUA_Logo.png}\\[1cm]
+
+\textsc{\Large \textbf{Μη-Γραμμική Δυναμική Συστημάτων και Ταλαντώσεις}}\\[0.4cm]
+\textsc{\Large \textbf{Non-Linear Dynamics and Oscillations}}\\[0.4cm]
+
+
+\rule{\linewidth}{0.7mm} \\[0.4cm]
+{ \huge \bfseries\color{black!70!black} Bifurcation Analysis of Spiking Nonlinear Opinion Dynamics}
+\rule{\linewidth}{0.7mm} \\[2cm]
+
+\begin{tabular}{l}
+
+\Large Σπυρίδων Γιάνι (03120026)\\[0.4cm]
+
+\end{tabular}
+
+\vfill
+
+
+{\large \color{black!80!black}{\textbf{Athens, Greece}}\\[0.2cm] \color{blue!90!black}20 Ιανουαρίου 2026}
+
+\end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+
+\newpage
+
+\section{Overview of the Nonlinear Opinion Dynamics Model}
+
+\subsubsection*{Introduction}
+\label{intro}
+
+Nonlienar Opinion Dynamics (NOD) models are used to describe how opinions evolve over time within a population. They are fast and flexible, 
+in the sense that on one hand they diverge quickly from indecision, while on the other hand their sensitivity is tunable. 
+The equation defining it \cite{Cathcart2024} is the following:
+\begin{equation}
+    \dot{z} = -d z + tanh(u (a z) + b)
+    \label{nod}
+\end{equation}
+where: 
+\begin{itemize}
+    \item $z(t)$ is the system's opinion, about 2 options (positive corresponds to option 1, negative to option 2). The magnitude $\lvert z \rvert$ 
+    shows the magnitude of the agent's opinion on the repsective option
+    \item $u(t)$ is the agent's sensitivity to its observations and it is implemented as a feedback gain, where $u = u_0 + K_u z^2$
+    \item $b(t)$ is the external input
+    \item $d$ is the damping coefficient of $z(t)$
+    \item $a$ is the amplification coefficient of $z(t)$
+    \item $K_u$ is the feedback gain
+\end{itemize}
+
+In \cite{Cathcart2024}, the dynamics of the NOD system are studied, showing that the gain $K_u$ plays a fundamental role: (Proposition 1)
+large values of $K_u$ increase the strength of non-neutral ($z \neq 0$) opinions. Specifically, at a critical value $u_0 = u_0^{*}$, there is a: 
+\begin{itemize}
+    \item supercritical pitchfork bifurcation, for $K_u < \frac{d^3}{3a}$
+    \item subcritical pitchfork bifurcation, for $K_u > \frac{d^3}{3a}$
+\end{itemize}
+
+In the case of the subcritical pitchfork, for $u_0 > u_0^{*}$ the system has three equilibria: the origin and two stable non-neutral, which are 
+also symmetric with respect to $z = 0$. These two stable equilibria are stronger for large values of $K_u$ and allow the model 
+to converge in a quick and stable manner to a specific option. 
+
+\subsubsection*{Limitations and the S-NOD Model}
+
+The NOD model described by \ref{nod} has a serious limitation: for large values of $K_u$, the system's opinion $z(t)$
+is not affected, unless very large inputs $b(t)$ are applied. This is an undesirable property in rapidly changing systems, where 
+agents must be able to quickly adapt to new information. Simply reducing $K_u$ would not be a preferable solution, as the decision 
+would not be as fast and robust. This trade-off is resolved with the Spiking-Nonlinear Opinion Dynamics (S-NOD) model, an alternate version to 
+\ref{nod}, which offers more flexibility. 
+
+It is defined by the following set of equations: 
+\begin{align}
+    \dot{z} & = -d z + tanh((k z^2 + \mu_0 - s)\alpha z + b) \\
+    \dot{s} & = \epsilon (k_s z^4 - s)
+    \label{snod}
+\end{align}
+where the new variables and parameters introduced are: 
+\begin{itemize}
+    \item $s(t)$ is the agent's slow recovery state, which provides negative feedback to the opinion variable 
+    \item $k$ is the sensitivity feedback gain
+    \item $m_0$ is the basal leve of the sensitivity 
+    \item $\epsilon$ is the timescale separation between the dynamics of $z(t)$ and $s(t)$
+    \item $k_s$ is the gain of the negative feedback 
+\end{itemize}
+
+The S-NOD system maintains the advantages of the NOD model, in the sense that while $z(t)$ increases, the positive feedback causes 
+the model to deviate quickly from the equilibrium and settle on a specific opinion. However, the slow negative feedback, introduced 
+by the state $s(t)$, causes the sensitivity of the agent to decrease over time, allowing the model to return to a neutral state and be more 
+receptive to new inputs. 
+
+Studying the dynamics of the system, this "back-and-forth" behaviour of the opinion variable $z(t)$ is evident through the 
+formation of limit cycles in the phase plane. The goal of this project is to prove the emergence of these limit cycles and analyse 
+the bifurcations causing them. 
+
+\section{Phase Space Analysis}
+
+In this section, we will examine how varying a single system parameter (while keeping the other parameters fixed), 
+by studying trajectories in the phase plane. To this end, a Python code has been developed, which, given the
+2-dimensional dynamical system, plots the phase portrait of the system in the (z, s) plane.
+\footnote{The code is available in this Github repository: } 
+
+\subsection{Case A: Input-Driven Spiking}
+
+The first case is concerned with how the constant external input $b$ affectes the S-NOD system \ref{snod}. Following 
+\cite{Belaustegui2025}, the other parameters are fixed in the following values: 
+\begin{center}
+    \begin{math}
+        \alpha = 1, d = 1, k = 3, k_s = 22, \epsilon = 0.05, \mu_0 = 0.8 
+    \end{math}
+\end{center}
+Here we will consider only values $b \ge 0$, as the case for $b < 0$ is identical, 
+due to the odd symmetry of the model.  
+
+In dynamical systems, it is common practice to begin the analysis by locating equilibria. The analytical expressions 
+of the equilibria are not easily computable, but Proposition 3.2 of \cite{Belaustegui2025} proves that the S-NOD 
+system has a unique equilibrium for any value of $b$. Furthermore, Theorem 3.7 of \cite{Belaustegui2025} describes 
+the bifurcations happening in the model: 
+\begin{center}
+    \textit{For certain conditions between the rest of the parameters (which can be easily verified that hold true for the 
+    chosen values), the unique equilibrium undergoes a Hopf bifurcation at two critical input values, $b^{*}$ and $b^{\dag}$, 
+    where $0 < b^{*} < b^{\dag}$}
+\end{center}
+Of course, due to the odd symmetry, for negative values of the input, the two critical values are $-b^{*}$ and $-b^{\dag}$.
+
+Combined with Theorem 3.8, for an input below the \emph{spiking threshold} $b^{*}$ the system has only 
+an equilibrium, while above $b^{*}$ limit cycles are created, which correspond to spiking of the opinion variable $z(t)$.
+Figure 2 in \cite{Belaustegui2025} suggests that the spiking threshold occurs at $b = 0.1$, therefore, in this analysis 
+we will be input values above and below this threshold. 
+
+\subsubsection*{Below the Threshold}
+
+For this case, we choose the value $b = 0.02$. It is often helpful to plot the equilibria 
+and the nullclines, before any trajectories. This is shown in figure \ref{below_nullclines}, 
+where the equilibrium is the intersection of the 2 nullclines.
+In figure \ref{below}, four trajectories of the S-NOD system have been plotted, 
+with randomly chosen initial conditions. All trajectories approach the unique equilibrium 
+asymptotically, along the z-nullcline, which suggests that the equilibrium is stable.
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_a_phase_plane_below_without.png}
+    \caption{The s-nullcline (light grey) has the shape of a parabola, while the z-nullcline (dark grey) 
+    comprises of 2 branches, both of which asymptotically approach $z=0$ and $z = \pm 1$}
+    \label{below_nullclines}
+\end{figure}
+
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_a_phase_plane_below.png}
+    \caption{The phase portrait of the S-NOD system for $b = 0.02 < b^{*}$. All trajectories converge to the unique equilibrium, 
+    which appears to be stable.}
+    \label{below}
+\end{figure}
+
+\subsubsection*{Above the Threshold}
+
+We examine how the system behaves for $b = 0.2 > b^{*}$. Again, we plot the nullclines and the equilibrium
+in figure \ref{above_nullclines}. With four randomly chosen initial conditions, 
+we plot the trajectories in figure \ref{above}. It is clear that the trajectories converge to a limit cycle, 
+following the z-nullcline. Thus, \emph{opinion spiking} occurs, i.e. the opinion variable is oscillating with 
+respect to time.
+The limit cycle appears to be stable and it encircles the unique equilibrium. 
+\footnote{If the input $b(t)$ becomes smaller than $-b^{*}$, then a limit cycle is also formed, but it will correspond to negative values 
+of the opinion variable $z(t)$, i.e. in option 2.}
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_a_phase_plane_above_without.png}
+    \caption{The s-nullcline (light grey) and the z-nullcline (dark grey) of the 
+    system, as before.}
+    \label{above_nullclines}
+\end{figure}
+
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_a_phase_plane_above.png}
+    \caption{The phase portrait of the S-NOD system for $b = 0.2 < b^{*}$. All trajectories converge 
+    to a limit cycle, which is clearly identified.}
+    \label{above}
+\end{figure}
+
+\subsubsection*{Interpretation}
+
+The results above show us that when the external input is not strong enough, the system (in the "long run") remains deadlocked (in other 
+words indecisive). However, when the input is stronger, the system converges to a specific option. This is the same behaviour as the NOD 
+system, studied in section \ref{intro}. The crucial difference is that now, the robustness of the decided comes in an excitable form, i.e. 
+through limit cycles. This allows the opinion variable $z(t)$ to oscillate and be flexible enough to change, without requiring the external 
+input to become extremely large.
+
+\subsection{Case B: Deadlock Breaking via Basal Sensitivity}
+
+Now the input $b$ is kept constant, but the basal sensitivity parameter $\mu_0$ is varied. Specifically, the parameters 
+are kept fixed as such: 
+\begin{center}
+    \begin{math}
+        \alpha = 1, d = 1, k = 2.3, k_s = 16, \epsilon = 0.1, b = 0
+    \end{math}
+\end{center} 
+following \cite{Belaustegui2025}. 
+
+According to \cite{Cathcart2024}, because $b = 0$, the origin $(0, 0)$ is always an equilibrium. For a basal sensitivity below the 
+critical value $\mu_0^{*}$, the origin is stable, while at $\mu_0 = \mu_0^{*}$ a subcritical pitchfork bifurcation occurs, 
+causing it to lose stability \cite{Belaustegui2025}. This critical value is: 
+\begin{center}
+    \begin{math}
+        \mu_0^{*} = \frac{d}{\alpha} = 1
+    \end{math}
+\end{center} 
+and according to Proposition 4.2 and Theorem 4.3 of \cite{Belaustegui2025}, for $\mu_0 > \mu_0^{*}$ 
+two more equilibria are created, symmetric around $z = 0$, while two symmetric limit cycles also appear, 
+encircling these two non-neutral equilibria. We will verify these results by plotting the phase portraits of the system. 
+
+\subsubsection*{Below the Critical Basal Sensitivity}
+
+We choose a basal sensitivity value of $\mu_0 = 0.8 < \mu_0^{*}$. The nullclines and equilibrium are shown in figure \ref{below_b}.
+The s-nullcline is, as before, a parabola. However, the z-nullcline contains two branches: for $z \neq 0$ it is a sigmoid-like curve, bounded 
+between -1 and 1. For $z = 0$, it is clear from the definition of the system that any value of $s$ satisfies the z-nullcline equation ($\dot{z} = 0$)
+So, the second branch of the nullcline will be the horizontal line $z = 0$, which is the only part of the z-nullcline that intersects 
+with the s-nullcline, as it is clearly seen in figure \ref{below_b}.
+
+As before, we choose four random initial conditions and plot the trajectories in figure \ref{below_b}. They all converge 
+to the origin, following the $z = 0$ branch of the z-nullcline asymptotically, causing the system to be deadlocked and to not make 
+any decisions.
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_b_phase_plane_below.png}
+    \caption{The phase portrait of the S-NOD system for $\mu_0 = 0.8$. The z-nullcline (dark grey) 
+    and the s-nullcline (light grey) intersect only at the origin, which appears to be a stable equilibrium.}
+    \label{below_b}
+\end{figure}
+
+\subsubsection*{Above the Critical Basal Sensitivity}
+
+In this occasion, we choose $$\mu_0 = 1.2 > \mu_0^{*}$$. The nullclines are shown in figure \ref{above_nullclines_b} and it is obvious that two 
+new equilibria have formed, symmetric around the horizontal axis. 
+\begin{figure}
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_b_phase_plane_above_without.png}
+    \caption{The nullclines and the equilibria of the S-NOD system for basal sensitivity above the critical. The z-nullcline (dark grey) 
+    and the s-nullcline (light grey) intersect not only at the origin, but at two more points, which are symmetric.}
+    \label{above_nullclines_b}
+\end{figure}
+
+In figure \ref{above_b}, we plot the phase portrait of the system. As we can see, the deadlock breaks and trajectories do not converge to the 
+neutral solution. Specifically, any initially positive opinion (no matter how small) will converge to a stable limit cycle, which is 
+strictly positive (for values of $z(t)$) and encircles the positive unstable equilibrium. Respectively, a negative opinion always ends up 
+in a limit cycle, which is strictly negative (for values of $z(t)$). Furthermore, the two limit cycles are symmetrical. 
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width = \textwidth]{case_b_phase_plane_above_v1.png}
+    \end{minipage}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width = \textwidth]{case_b_phase_plane_above_v2.png}
+    \end{minipage}
+    \caption{The phase portrait of the S-NOD system for $\mu_0 = 1.2$. In the left figure, the initial conditions of the trajectories 
+    have been chosen to be outside the limit cycles, while in the right figure, they have been chosen to be inside. In both cases, 
+    the trajectories converge to the same limit cycles, depending on whether the initial opinion variable $z(0)$ was positive or negative.}
+    \label{above_b}
+\end{figure}
+
+\subsubsection*{Interpretation}
+
+The analysis above shows that if the system is not sensitive enough, if no external input is applied, it remains neutral, an expected behaviour. 
+If the sensitivity grows, with no external input, even small perturbations (positive or negative), push the model to make a non-neutral 
+decision (towards option 1 or option 2, respectively). Nonetheless, the excitability offered by the S-NOD model (again via the formation 
+of limit cycles) allow the agent to be flexible enough to respond effectively to external changes in the environment. 
+
+\newpage
+\section{Bifurcation Analysis}
+
+In this section, we will numerically verify the bifurcations described in \cite{Belaustegui2025}. This will be done using the MatCont Toolbox
+\footnote{\url{https://matcont.sourceforge.io/}}, 
+a MatLab-based software for numerical continuation and bifurcation study of dynamical systems. We will examine the same two cases as before,
+by calculating equilibria continuation, limit cycles and the resulting opinion spikes.
+
+\subsection{Case A: Input-Driven Spiking}
+
+In MatCont, we define the S-NOD system \ref{snod} and set the parameters as in the previous section. We perform an equilibrium continuation
+with respect to the input $b$, starting from $b = 0$. The initial condition is set to be the origin, since it is the only equilibrium 
+for $b = 0$. After one forward and one backward continuation, we obtain the bifurcation diagram shown in figure \ref{bif_a}.
+\begin{figure}[ht]
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_a_equilibria_cont.png}
+    \caption{Bifurcation diagram of the S-NOD system with respect to the input $b$. The blue line indicates that the equilibrium is 
+    stable and the purple line that it is unstable. Hopf bifurcations are marked with the letter "H".}
+    \label{bif_a}
+\end{figure}
+
+As predicted in Theorem 3.7 of \cite{Belaustegui2025}, four Hopf bifurcations occur in total, in symmetrical pairs. 
+Two of them occur for positive values of $b$ (at $b^{*}$ and $b^{\dag}$), and two at their negative counterparts. 
+For input values between $b^{*}$ and $b^{\dag}$, the equilibrium is unstable and as we have seen before, trajectories converge 
+to stable limit cycles. It is interesting to note, that this bifurcation diagram suggests that very large values of the input 
+eliminate opinion spikes and cause the system to converge strongly and robustly to a specific option, without oscillations. 
+
+We can also verify that Hopf bifurcations occur by observing the eigenvalues of the Jacobian matrix of the system at the 
+bifurcations, as seen in table \ref{hopf_eigenvalues}. In both cases, at the bifurcation points, 
+the eigenvalues are purely imaginary (with zero real part), which is the defining property of Hopf bifurcations.
+\begin{table}[ht]
+    \centering
+    %\begin{tabular}{| p{0.1\linewidth} | p{0.3\linewidth} | p{0.3\linewidth} |}
+    \begin{tabular}{c|c|c}
+        \toprule
+        \textbf{$b$} & \textbf{Re($\lambda$)} & \textbf{Im($\lambda$)} \\
+        \midrule
+        $0.0250452$ & $6.1826 \cdot 10^{-7}$ & $0.051989$\\
+        %\hline 
+         & $6.1826 \cdot 10^{-7}$ & $-0.051989$\\
+        \hline 
+        $0.7909516$ & $-1.0309 \cdot 10^{-6}$ & $0.528419$\\
+        %\hline 
+         & $-1.0309 \cdot 10^{-6}$ & $-0.528419$\\
+        %\hline 
+        \bottomrule
+    \end{tabular}
+    \caption{Critical values of the input $b$ at which Hopf bifurcations occur, 
+    along with the eigenvalues of the Jacobian matrix of the system}
+    \label{hopf_eigenvalues}
+\end{table}
+
+Finally, we can perform a limit cycle continuation, starting from the Hopf bifurcation at $b^{*}$, 
+which results in the diagram shown in figure \ref{limit_cycle_cont}. From both diagrams it interesting to note 
+that while we approach the second Hopf bifurcation at $b^{\dag}$, the period of the limit cycle decreases significantly, 
+while the magnitude of the opinion variable $z(t)$ exhibits significantly smaller spiking. 
+This suggests that the system is less excitable and more robust to changes in the input, as we approach $b^{\dag}$.
+Note that these diagrams have occured after the 'MaxStepSize' parameter of MatCont has bee increased to 2, 
+so that the appearing limit cycles are distinctly visible.
+\begin{figure}
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width = \textwidth]{case_b_limit_cycle_cont_a.png}
+    \end{minipage}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width = \textwidth]{case_b_limit_cycle_cont_b.png}
+    \end{minipage}
+    \caption{Result of limit cycle continuation of the system, starting from the Hopf bifurcation at $b^{*}$. 
+    The left figure shows the opinion variable $z(t)$ with respect to the input $b$, 
+    while the right figure shows the period of the limit cycle with respect to $b$.}
+    \label{limit_cycle_cont}
+\end{figure}
+
+\subsection{Case B: Deadlock Breaking via Basal Sensitivity}
+
+Fixing the parameters as before and choosing again the inital point to be the origin, we perform an equilibrium continuation 
+with respect to the basal sensitivity $\mu_0$, starting from $\mu_0 = 0.7$.
+After one forward and one backward continuation, a "Branch Point" bifurcation is detected at $\mu_0^{*} = 1$, 
+which is to be expected (a subcritical pitchfork bifurcation is supposed to occur). 
+We choose this point as a new initial condition and perform a second equilibrium continuation,
+which results in the bifurcation diagram shown in figure \ref{bif_b}.
+\begin{figure}[ht]
+    \centering    
+    \includegraphics[width = 0.6\textwidth]{case_b_equilibria_cont.png}
+    \caption{Bifurcation diagram of the S-NOD system with respect to the basal sensitivity $\mu_0$. The blue line indicates that the equilibrium is 
+    stable and the purple line that it is unstable. The "BP" marker indicates the Branch Point bifurcation at $\mu_0^{*} = 1$.
+    The "H" here corresponds to a "Neutral Saddle" bifurcation, not to a Hopf. The "LP" marker 
+    indicates the "Limit Point", which is a saddle-node bifurcation.}
+    \label{bif_b}
+\end{figure}
+
+The diagram confirms the theoretical predictions and the phase portraits. For small basal sensitivity, the only 
+equilibrium is the origin, which is stable. At $\mu_0^{*} = 1$, a subcritical pitchfork bifurcation occurs, 
+making the origin unstable. For $\mu_0 > \mu_0^{*}$, two new non-zero, unstable equilibria are created, symmetric around $z = 0$, 
+through a saddle-node bifurcation. Each of these equilibria is encircled by a stable limit cycle, which corresponds to opinion spiking, 
+as we have seen in the phase space analysis.
+
+
+
+
+
+
+\newpage
+\printbibliography[heading=bibintoc]
+
+\end{document}
